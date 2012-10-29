@@ -215,7 +215,7 @@ class SftpFile(object):
             raise RuntimeError("Can't open file {0}".format(path.decode("utf-8")))
 
     def write(self, data):
-        written = api.library.sftp_write(remote_file, data, len(data))
+        written = api.library.sftp_write(self.file, data, len(data))
         if written != len(data):
             raise RuntimeError("Can't write file")
 
@@ -227,8 +227,6 @@ class SftpFile(object):
 
         buffer = ctypes.create_string_buffer(buffer_len)
         readed = api.library.sftp_read(self.file, ctypes.byref(buffer),  buffer_len);
-
-        import pdb; pdb.set_trace()
 
         if readed == 0:
             return b""
