@@ -191,9 +191,79 @@ class Sftp(object):
 
         api.library.sftp_close(remote_file)
 
+    def open(self, path, mode):
+        if isinstance(path, text_type):
+            path = bytes(path, "utf-8")
+
+        return SftpFile(path, mode, self)
+
     def __del__(self):
         if self.sftp is not None:
             api.library.sftp_free(self.sftp)
+
+class SftpFile(object):
+    _closed = False
+
+    def __init__(self, path, mode, sftp_wrapper):
+        self.sftp_wrapper = sftp_wrapper
+        self.sftp = sftp_wrapper.sftp
+
+        self.file = api.library.sftp_open(self.sftp, path, mode, stat.S_IRWXU)
+
+        if self.file is None:
+            self._closed = True
+            raise RuntimeError("Can't open file {0}".format(path.decode("utf-8")))
+
+    def write(self, data):
+        written = api.library.sftp_write(remote_file, data, len(data))
+        if written != len(data):
+            raise RuntimeError("Can't write file")
+
+    def read(self, num=None):
+        if num is None:
+            buffer_len = 1024
+        else:
+            buffer_len = num
+
+        buffer = ctypes.create_string_buffer(buffer_len)
+        readed = api.library.sftp_read(self.file, ctypes.byref(buffer),  buffer_len);
+
+        import pdb; pdb.set_trace()
+
+        if readed == 0:
+            return b""
+
+        if num is not None and num > 0:
+            if buffer_len != readed:
+                raise RuntimeError("Error on read")
+            return buffer.value
+
+        readed_data = [buffer.value]
+        while True:
+            buffer = ctypes.create_string_buffer(buffer_len)
+            readed = api.library.sftp_read(self.file, ctypes.byref(buffer),  buffer_len);
+            if readed == 0:
+                break
+
+            readed_data.append(buffer.value)
+        return b"".join(readed_data)
+
+    def seek(self, offset):
+        ret = api.library.sftp_seek64(self.file, offset);
+        if ret != api.SSH_OK:
+            return False
+
+        return True
+
+    def tell(self):
+        return api.library.sftp_tell64(self.file)
+
+    def close(self):
+        if self._closed:
+            raise RuntimeError("Already closed")
+
+        self._closed = True
+        api.library.sftp_close(self.file)
 
 
 def connect(hostname="localhost", port="22", username=None, password=None):
