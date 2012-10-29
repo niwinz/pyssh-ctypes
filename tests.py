@@ -38,27 +38,27 @@ class PythonLibsshTest(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             result = r.as_bytes()
 
-    #def test_connect_and_put(self):
-    #    sha1_1 = hashlib.sha1()
-    #    with io.open("/tmp/py-libssh.temp.file.2", "wb") as f:
-    #        data = b"FOOOO" * 20
-    #        sha1_1.update(data)
-    #        f.write(data)
+    def test_connect_and_put(self):
+        sha1_1 = hashlib.sha1()
+        with io.open("/tmp/py-libssh.temp.file.2", "wb") as f:
+            data = b"FOOOO" * 20
+            sha1_1.update(data)
+            f.write(data)
 
-    #    session = self.pyssh.connect()
-    #    sftp = self.pyssh.Sftp(session)
-    #    sftp.put("/tmp/py-libssh.temp.file.2", "/tmp/py-libssh.temp.file.3")
+        session = self.pyssh.connect()
+        sftp = self.pyssh.Sftp(session)
+        sftp.put("/tmp/py-libssh.temp.file.2", "/tmp/py-libssh.temp.file.3")
 
-    #    self.assertTrue(os.path.exists("/tmp/py-libssh.temp.file.3"))
+        self.assertTrue(os.path.exists("/tmp/py-libssh.temp.file.3"))
 
-    #    sha1_2 = hashlib.sha1()
-    #    with io.open("/tmp/py-libssh.temp.file.3", "rb") as f:
-    #        sha1_2.update(f.read())
+        sha1_2 = hashlib.sha1()
+        with io.open("/tmp/py-libssh.temp.file.3", "rb") as f:
+            sha1_2.update(f.read())
 
-    #    self.assertEqual(sha1_2.hexdigest(), sha1_1.hexdigest())
+        self.assertEqual(sha1_2.hexdigest(), sha1_1.hexdigest())
 
-    #    os.remove("/tmp/py-libssh.temp.file.2")
-    #    os.remove("/tmp/py-libssh.temp.file.3")
+        os.remove("/tmp/py-libssh.temp.file.2")
+        os.remove("/tmp/py-libssh.temp.file.3")
 
     #def test_read_remote_file(self):
     #    session = self.pyssh.connect()

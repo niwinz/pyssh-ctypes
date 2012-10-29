@@ -75,6 +75,20 @@ try:
     library.ssh_get_error.argtypes = [ctypes.c_void_p]
     library.ssh_get_error.restype = ctypes.c_char_p
 
+    # SFTP
+    library.sftp_new.argtypes = [ctypes.c_void_p]
+    library.sftp_new.restype = ctypes.c_void_p
+
+    library.sftp_free.argtypes = [ctypes.c_void_p]
+
+    library.sftp_open.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_int, ctypes.c_int]
+    library.sftp_open.restype = ctypes.c_void_p
+
+    library.sftp_close.argtypes = [ctypes.c_void_p]
+
+    library.sftp_write.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_uint]
+    library.sftp_write.restype = ctypes.c_int
+
 except AttributeError:
     raise ImportError('ssh shared library not found or incompatible')
 except (OSError, IOError):

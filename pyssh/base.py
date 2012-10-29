@@ -4,8 +4,10 @@ from __future__ import unicode_literals
 from . import api
 
 import ctypes
+import stat
 import sys
-import pdb
+import os
+import io
 
 # Python 2.7 compatibility layer
 
@@ -156,6 +158,42 @@ class Session(object):
     def __del__(self):
         if self.session is not None:
             api.library.ssh_free(self.session)
+
+class Sftp(object):
+    sftp = None
+    session = None
+
+    def __init__(self, session):
+        self.session_wrapper = session
+        self.session = session.session
+
+        self.sftp = api.library.sftp_new(self.session)
+
+    def put(self, path, remote_path):
+        if not os.path.exists(path):
+            raise RuntimeError("Path {0} does not exists".format(path))
+
+        if isinstance(remote_path, text_type):
+            remote_path = bytes(remote_path, "utf-8")
+
+        access_type = os.O_WRONLY | os.O_CREAT | os.O_TRUNC
+        remote_file = api.library.sftp_open(self.sftp, remote_path, access_type, stat.S_IRWXU);
+
+        with io.open(path, "rb") as f:
+            while True:
+                chuck = f.read(1024)
+                if not chuck:
+                    break
+
+                written = api.library.sftp_write(remote_file, chuck, len(chuck))
+                if written != len(chuck):
+                    raise RuntimeError("Can't write file")
+
+        api.library.sftp_close(remote_file)
+
+    def __del__(self):
+        if self.sftp is not None:
+            api.library.sftp_free(self.sftp)
 
 
 def connect(hostname="localhost", port="22", username=None, password=None):

@@ -61,6 +61,18 @@ Represents a result of execution of command on ssh session. Result by default, d
     Same as that, ``as_str()`` but returns a bytes.
 
 
+``pyssh.base.Sftp``
+^^^^^^^^^^^^^^^^^^^^^
+
+Represents a sftp connection.
+
+``pyssh.base.Sftp.__init__(session)``
+    Creates a sftp session on top of ssh session (``pyssh.base.Session``).
+
+``pyssh.base.Sftp.put(local_path, remote_path)``
+    Transfer local file to remote file.
+
+
 Examples
 --------
 
