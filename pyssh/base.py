@@ -1,8 +1,23 @@
 # -*- coding: utf-8 -*-
 
+from __future__ import unicode_literals
 from . import api
-import ctypes
 
+import ctypes
+import sys
+import pdb
+
+# Python 2.7 compatibility layer
+
+if sys.version_info.major < 3:
+    def bytes(data, encoding="utf-8"):
+        return data.encode(encoding)
+
+    text_type = unicode
+    binary_type = str
+else:
+    text_type = str
+    binary_type = bytes
 
 class Result(object):
     _return_code = None
@@ -12,36 +27,45 @@ class Result(object):
         self.session = session
         self.command = command
 
+    def __next__(self):
+        if self._finished:
+            raise StopIteration()
+
+        data = ctypes.create_string_buffer(10)
+        readed_bytes = api.library.ssh_channel_read(self.channel, ctypes.byref(data), len(data), 0)
+        if readed_bytes > 0:
+            return data.value
+
+        api.library.ssh_channel_send_eof(self.channel);
+        self._return_code = api.library.ssh_channel_get_exit_status(self.channel)
+        api.library.ssh_channel_free(self.channel)
+        self._finished = True
+        raise StopIteration
+
     def __iter__(self):
         if self._consumed:
             raise RuntimeError("Result are consumed")
 
         self._consumed = True
+        self._finished = False
 
-        channel = api.library.ssh_channel_new(self.session);
-        ret = api.library.ssh_channel_open_session(channel)
+        self.channel = api.library.ssh_channel_new(self.session);
+        ret = api.library.ssh_channel_open_session(self.channel)
         if ret != api.SSH_OK:
             raise RuntimeError("Error code: {0}".format(ret))
 
-        ret = api.library.ssh_channel_request_exec(channel, self.command)
+        ret = api.library.ssh_channel_request_exec(self.channel, self.command)
         if ret != api.SSH_OK:
             msg = api.library.ssh_get_error(self.session)
             raise RuntimeError("Error {0}: {1}".format(ret, msg.decode('utf-8')))
 
-        while True:
-            data = ctypes.create_string_buffer(10)
-            readed_bytes = api.library.ssh_channel_read(channel, ctypes.byref(data), len(data), 0)
-            if readed_bytes > 0:
-                yield data.value
-            else:
-                api.library.ssh_channel_send_eof(channel);
-                self._return_code = api.library.ssh_channel_get_exit_status(channel)
-                break
-
-        api.library.ssh_channel_free(channel)
+        return self
 
     def as_bytes(self):
         return b"".join([x for x in self])
+
+    if sys.version_info.major == 2:
+        next = __next__
 
     def as_str(self):
         return self.as_bytes().decode("utf-8")
@@ -61,24 +85,24 @@ class Session(object):
     def __init__(self, hostname, port, username=None, password=None, passphrase=None):
         self.session = api.library.ssh_new()
 
-        if isinstance(hostname, str):
+        if isinstance(hostname, text_type):
             self.hostname = bytes(hostname, "utf-8")
         else:
             self.hostname = hostname
 
         if isinstance(port, int):
             self.port = bytes(str(int), "utf-8")
-        elif isinstance(port, str):
+        elif isinstance(port, text_type):
             self.port = bytes(port, "utf-8")
         else:
             self.port = port
 
-        if isinstance(username, str):
+        if isinstance(username, text_type):
             self.username = bytes(username, "utf-8")
         else:
             self.username = username
 
-        if isinstance(password, str):
+        if isinstance(password, text_type):
             self.password = bytes(password, "utf-8")
         else:
             self.password = password
@@ -86,7 +110,7 @@ class Session(object):
         if self.username:
             api.library.ssh_options_set(this.session, api.SSH_OPTIONS_USER, self.username)
 
-        if isinstance(passphrase, str):
+        if isinstance(passphrase, text_type):
             self.passphrase = bytes(passphrase, "utf-8")
         else:
             self.passphrase = passphrase
@@ -117,7 +141,7 @@ class Session(object):
                 raise RuntimeError("Error code: {0}".format(ret))
 
     def execute(self, command):
-        if isinstance(command, str):
+        if isinstance(command, text_type):
             command = bytes(command, "utf-8")
 
         return Result(self.session, command)
