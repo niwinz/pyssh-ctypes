@@ -11,7 +11,7 @@ setup(
     author_email='niwi@niwi.be',
 
     url='https://github.com/niwibe/py-libssh',
-    py_modules = ['pyssh'],
+    packages = ['pyssh'],
 
     classifiers = [
         "Development Status :: 4 - Beta",
@@ -21,10 +21,10 @@ setup(
         "Operating System :: POSIX :: BSD :: NetBSD",
         "Operating System :: POSIX :: Linux",
         "Programming Language :: Python",
-        #"Programming Language :: Python :: 2.7",
+        "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3.2",
         "Programming Language :: Python :: 3.3",
-        #"Programming Language :: Python :: Implementation :: CPython",
+        "Programming Language :: Python :: Implementation :: CPython",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: BSD License",
     ]
