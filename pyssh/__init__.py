@@ -3,6 +3,7 @@
 from __future__ import unicode_literals
 from . import api
 
+import warnings
 import ctypes
 import stat
 import sys
@@ -62,10 +63,31 @@ class Result(object):
         self._finished = False
 
         self.channel = api.library.ssh_channel_new(self.session);
+
+        # Open ssh session
         ret = api.library.ssh_channel_open_session(self.channel)
         if ret != api.SSH_OK:
             raise RuntimeError("Error code: {0}".format(ret))
 
+        # Set environ variable if theese are available
+        #if self.env:
+        #    for key, value in self.env.items():
+        #        _key, _value = key, value
+        #        if isinstance(_key, text_type):
+        #            _key = bytes(_key, encoding="utf-8")
+
+        #        if isinstance(_value, text_type):
+        #            _value = bytes(_value, encoding="utf-8")
+
+        #        res = api.library.ssh_channel_request_env(self.channel, _key, _value)
+        #        res = api.library.ssh_channel_request_shell(self.channel)
+        #        if res != api.SSH_OK:
+        #            msg = api.library.ssh_get_error(self.session)
+        #            print("*"*20)
+        #            print("Error: ", msg)
+        #            warnings.warn("Error on set {0} variable".format(key), RuntimeWarning)
+
+        # Execute the command
         ret = api.library.ssh_channel_request_exec(self.channel, self.command)
         if ret != api.SSH_OK:
             msg = api.library.ssh_get_error(self.session)
@@ -202,14 +224,22 @@ class Session(object):
         self._closed = True
         api.library.ssh_disconnect(self.session)
 
-    def execute(self, command):
+    def execute(self, command, shell=False, pty_size=(80, 24), env={}):
         """
         Execute command on remote host.
 
         :param str command: command string
+        :param bool shell: request shell
+        :param tuple pty_size: in case of shell is true this indicates
+            the size of a virtual terminal
+        :param dict env: addiotional environ variables
+
         :returns: Lazy result instance
         :rtype: :py:class:`pyssh.Result`
         """
+        if shell:
+            raise NotImplementedError("shell is not implemented")
+
         if isinstance(command, text_type):
             command = bytes(command, "utf-8")
 
@@ -242,6 +272,7 @@ class Sftp(object):
         self.session = session.session
 
         self.sftp = api.library.sftp_new(self.session)
+
 
     def get(self, remote_path, local_path):
         """

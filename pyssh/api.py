@@ -72,6 +72,16 @@ try:
     library.ssh_channel_get_exit_status.argtypes = [ctypes.c_void_p]
     library.ssh_channel_get_exit_status.restype = ctypes.c_int
 
+    library.ssh_channel_request_env.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_char_p]
+    library.ssh_channel_request_env.restype = ctypes.c_int
+
+    library.ssh_channel_request_pty.argtypes = [ctypes.c_void_p]
+    library.ssh_channel_request_pty.restype = ctypes.c_int
+
+    library.ssh_channel_request_shell.argtypes = [ctypes.c_void_p]
+    library.ssh_channel_request_shell.restype = ctypes.c_int
+
+
     library.ssh_get_error.argtypes = [ctypes.c_void_p]
     library.ssh_get_error.restype = ctypes.c_char_p
 

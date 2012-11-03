@@ -21,7 +21,7 @@ class PythonLibsshTest(unittest.TestCase):
     def tearDownClass(cls):
         os.remove("/tmp/py-libssh.temp.file")
 
-    def test_connect_and_execute_command_success(self):
+    def test_connect_and_execute_command_01(self):
         s = self.pyssh.connect()
         r = s.execute("uname")
         result = r.as_bytes()
@@ -30,13 +30,19 @@ class PythonLibsshTest(unittest.TestCase):
         self.assertEqual(return_code, 0)
         self.assertEqual(result, b"Linux\n")
 
-    def test_connect_and_execute_command_01(self):
+    def test_connect_and_execute_command_02(self):
         s = self.pyssh.connect()
         r = s.execute("uname")
         result = r.as_bytes()
 
         with self.assertRaises(RuntimeError):
             result = r.as_bytes()
+
+    #def test_connect_and_execute_command_02(self):
+    #    s = self.pyssh.connect()
+    #    r = s.execute("echo $FOO", env={"FOO": "Hello"})
+    #    result = r.as_bytes()
+    #    self.assertEqual(result, b"Hello")
 
     def test_connect_and_put(self):
         sha1_1 = hashlib.sha1()
