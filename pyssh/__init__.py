@@ -243,6 +243,29 @@ class Sftp(object):
 
         self.sftp = api.library.sftp_new(self.session)
 
+    def get(self, remote_path, local_path):
+        """
+        Get a remote file to local.
+
+        :param str remote_path: remote file path
+        :param str local_path:  local file path
+        """
+        if isinstance(remote_path, text_type):
+            remote_path = bytes(remote_path, "utf-8")
+
+        access_type = os.O_RDONLY
+        remote_file = api.library.sftp_open(self.sftp, remote_path, access_type, stat.S_IRWXU)
+
+        with io.open(local_path, "wb") as f:
+            while True:
+                buffer = ctypes.create_string_buffer(1024)
+                readed = api.library.sftp_read(remote_file, ctypes.byref(buffer),  1024);
+
+                if readed == 0:
+                    break
+
+                f.write(buffer.value)
+
     def put(self, path, remote_path):
         """
         Puts the local file to remote host.
