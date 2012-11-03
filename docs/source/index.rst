@@ -28,7 +28,7 @@ For normal use, you can use a standard python distutils ``setup.py`` file::
 
 Or::
 
-    pip install py-libssh-ctypes
+    pip install pyssh-ctypes
 
 
 Contents:
