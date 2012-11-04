@@ -94,3 +94,10 @@ class PythonLibsshTest(unittest.TestCase):
         sftp = self.pyssh.Sftp(session)
         f = sftp.open("/tmp/py-libssh.temp.file", os.O_RDONLY)
         self.assertEqual(b"aaaaaaaaa\n", f.read(10))
+
+    #def test_shell_01(self):
+    #    import pdb; pdb.set_trace()
+    #    session = self.pyssh.connect()
+    #    shell = session.shell()
+    #    #x = shell.read(1024)
+    #    #shell.write("echo $USER;\n")

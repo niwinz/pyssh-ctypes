@@ -23,6 +23,97 @@ else:
     binary_type = bytes
 
 
+class Shell(object):
+    _channel = None
+
+    def __init__(self, session, pty_size, env):
+        self.session = session
+        self.pty_size = pty_size
+        self.env = env
+
+    @property
+    def channel(self):
+        if self._channel is not None:
+            return self._channel
+
+        self._channel = api.library.ssh_channel_new(self.session);
+
+        # Open ssh session
+        ret = api.library.ssh_channel_open_session(self._channel)
+        if ret != api.SSH_OK:
+            raise RuntimeError("Error code: {0}".format(ret))
+
+        # Request pty
+        ret = api.library.ssh_channel_request_pty(self._channel)
+        if ret != api.SSH_OK:
+            raise RuntimeError("Error code: {0}".format(ret))
+
+        # Request pty
+        #ret = api.library.ssh_channel_request_pty_size(self._channel,
+        #                            self.pty_size[0], self.pty_size[1])
+        #if ret != api.SSH_OK:
+        #    raise RuntimeError("Error code: {0}".format(ret))
+
+        # Request shell
+        ret = api.library.ssh_channel_request_shell(self._channel)
+        if ret != api.SSH_OK:
+            raise RuntimeError("Error code: {0}".format(ret))
+
+        # Set environ variable if theese are available
+        if self.env:
+            for key, value in self.env.items():
+                _key, _value = key, value
+                if isinstance(_key, text_type):
+                    _key = bytes(_key, encoding="utf-8")
+
+                if isinstance(_value, text_type):
+                    _value = bytes(_value, encoding="utf-8")
+
+                res = api.library.ssh_channel_request_env(self.channel, _key, _value)
+                res = api.library.ssh_channel_request_shell(self.channel)
+                if res != api.SSH_OK:
+                    msg = api.library.ssh_get_error(self.session)
+                    print("Error: ", msg)
+                    warnings.warn("Error on set {0} variable".format(key), RuntimeWarning)
+
+        return self._channel
+
+    def write(self, data):
+        if isinstance(data, text_type):
+            data = bytes(data, "utf-8")
+
+        written = api.library.ssh_channel_write(self.channel, data, len(data))
+        if written != len(data):
+            raise RuntimeError("Error on write")
+        return written
+
+    def read(self, num):
+        res = api.library.ssh_channel_is_open(self.channel)
+        if res == 0:
+            raise RuntimeError("Channel is closed")
+
+        res = api.library.ssh_channel_is_eof(self.channel)
+        if res != 0:
+            return b""
+
+        #nbytes = ssh_channel_read(channel, buffer, sizeof(buffer), 0);
+        buffer = ctypes.create_string_buffer(num)
+        readed = api.library.ssh_channel_read_nonblocking(self.channel, buffer, num, 0)
+        if readed < 0:
+            raise RuntimeError("Error on read")
+
+        return buffer.value
+
+    def __del__(self):
+        if self._channel is not None:
+            if api.library.ssh_channel_is_closed(self._channel) == 0:
+                api.library.ssh_channel_send_eof(self._channel)
+                api.library.ssh_channel_close(self._channel)
+
+            api.library.ssh_channel_free(self.channel)
+            self._channel = None
+
+
 class Result(object):
     """
     Lazy command execution result wrapper.
@@ -49,6 +140,7 @@ class Result(object):
         api.library.ssh_channel_send_eof(self.channel);
         self._return_code = api.library.ssh_channel_get_exit_status(self.channel)
         api.library.ssh_channel_free(self.channel)
+        self.channel = None
         self._finished = True
         raise StopIteration
 
@@ -68,24 +160,6 @@ class Result(object):
         ret = api.library.ssh_channel_open_session(self.channel)
         if ret != api.SSH_OK:
             raise RuntimeError("Error code: {0}".format(ret))
-
-        # Set environ variable if theese are available
-        #if self.env:
-        #    for key, value in self.env.items():
-        #        _key, _value = key, value
-        #        if isinstance(_key, text_type):
-        #            _key = bytes(_key, encoding="utf-8")
-
-        #        if isinstance(_value, text_type):
-        #            _value = bytes(_value, encoding="utf-8")
-
-        #        res = api.library.ssh_channel_request_env(self.channel, _key, _value)
-        #        res = api.library.ssh_channel_request_shell(self.channel)
-        #        if res != api.SSH_OK:
-        #            msg = api.library.ssh_get_error(self.session)
-        #            print("*"*20)
-        #            print("Error: ", msg)
-        #            warnings.warn("Error on set {0} variable".format(key), RuntimeWarning)
 
         # Execute the command
         ret = api.library.ssh_channel_request_exec(self.channel, self.command)
@@ -224,21 +298,24 @@ class Session(object):
         self._closed = True
         api.library.ssh_disconnect(self.session)
 
-    def execute(self, command, shell=False, pty_size=(80, 24), env={}):
+    def shell(self, pty_size=(80, 24), env={}):
+        """
+        :param tuple pty_size: in case of shell is true this indicates
+            the size of a virtual terminal
+        :param dict env: addiotional environ variables
+        """
+        warnings.warn("Shell feature is very experimental and uncomplete.", Warning)
+        return Shell(self.session, pty_size, env)
+
+    def execute(self, command):
         """
         Execute command on remote host.
 
         :param str command: command string
-        :param bool shell: request shell
-        :param tuple pty_size: in case of shell is true this indicates
-            the size of a virtual terminal
-        :param dict env: addiotional environ variables
 
         :returns: Lazy result instance
         :rtype: :py:class:`pyssh.Result`
         """
-        if shell:
-            raise NotImplementedError("shell is not implemented")
 
         if isinstance(command, text_type):
             command = bytes(command, "utf-8")

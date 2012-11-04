@@ -64,8 +64,26 @@ try:
     library.ssh_channel_read.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint, ctypes.c_int]
     library.ssh_channel_read.restype = ctypes.c_int
 
+    library.ssh_channel_read_nonblocking.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint, ctypes.c_int]
+    library.ssh_channel_read_nonblocking.restype = ctypes.c_int
+
+    library.ssh_channel_write.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_uint]
+    library.ssh_channel_write.restype = ctypes.c_int
+
     library.ssh_channel_send_eof.argtypes = [ctypes.c_void_p]
     library.ssh_channel_send_eof.restype = ctypes.c_int
+
+    library.ssh_channel_is_eof.argtypes = [ctypes.c_void_p]
+    library.ssh_channel_is_eof.restype = ctypes.c_int
+
+    library.ssh_channel_is_open.argtypes = [ctypes.c_void_p]
+    library.ssh_channel_is_open.restype = ctypes.c_int
+
+    library.ssh_channel_is_closed.argtypes = [ctypes.c_void_p]
+    library.ssh_channel_is_closed.restype = ctypes.c_int
+
+    library.ssh_channel_close.argtypes = [ctypes.c_void_p]
+    library.ssh_channel_close.restype = ctypes.c_int
 
     library.ssh_channel_free.argtypes = [ctypes.c_void_p]
 
@@ -77,6 +95,9 @@ try:
 
     library.ssh_channel_request_pty.argtypes = [ctypes.c_void_p]
     library.ssh_channel_request_pty.restype = ctypes.c_int
+
+    library.ssh_channel_request_pty_size.argtypes = [ctypes.c_void_p, ctypes.c_int, ctypes.c_int]
+    library.ssh_channel_request_pty_size.restype = ctypes.c_int
 
     library.ssh_channel_request_shell.argtypes = [ctypes.c_void_p]
     library.ssh_channel_request_shell.restype = ctypes.c_int
