@@ -235,7 +235,7 @@ class Session(object):
             self.hostname = hostname
 
         if isinstance(port, int):
-            self.port = bytes(str(int), "utf-8")
+            self.port = bytes(str(port), "utf-8")
         elif isinstance(port, text_type):
             self.port = bytes(port, "utf-8")
         else:
