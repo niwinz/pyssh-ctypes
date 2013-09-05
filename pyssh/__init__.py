@@ -252,7 +252,7 @@ class Session(object):
             self.password = password
 
         if self.username:
-            api.library.ssh_options_set(this.session, api.SSH_OPTIONS_USER, self.username)
+            api.library.ssh_options_set(self.session, api.SSH_OPTIONS_USER, self.username)
 
         if isinstance(passphrase, text_type):
             self.passphrase = bytes(passphrase, "utf-8")
