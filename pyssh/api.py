@@ -11,6 +11,7 @@ def load_library():
     libssh = ctypes.CDLL(libpath)
     return libssh
 
+
 SSH_OK = 0
 SSH_ERROR = -1
 SSH_AGAIN = -2

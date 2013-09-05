@@ -21,18 +21,29 @@ class PythonLibsshTest(unittest.TestCase):
     def tearDownClass(cls):
         os.remove("/tmp/py-libssh.temp.file")
 
-    def test_connect_and_execute_command_01(self):
+    def test_connect_and_execute_command_not_lazy(self):
         s = self.pyssh.connect()
-        r = s.execute("uname")
+        r = s.execute("uname", lazy=False)
         result = r.as_bytes()
         return_code = r.return_code
 
         self.assertEqual(return_code, 0)
         self.assertEqual(result, b"Linux\n")
+        self.assertIsInstance(r, self.pyssh.Result)
+
+    def test_connect_and_execute_command_01(self):
+        s = self.pyssh.connect()
+        r = s.execute("uname", lazy=True)
+        result = r.as_bytes()
+        return_code = r.return_code
+
+        self.assertEqual(return_code, 0)
+        self.assertEqual(result, b"Linux\n")
+        self.assertIsInstance(r, self.pyssh.LazyResult)
 
     def test_connect_and_execute_command_02(self):
         s = self.pyssh.connect()
-        r = s.execute("uname")
+        r = s.execute("uname", lazy=True)
         result = r.as_bytes()
 
         with self.assertRaises(RuntimeError):

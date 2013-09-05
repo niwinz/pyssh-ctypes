@@ -114,7 +114,7 @@ class Shell(object):
             self._channel = None
 
 
-class Result(object):
+class LazyResult(object):
     """
     Lazy command execution result wrapper.
 
@@ -133,7 +133,8 @@ class Result(object):
             raise StopIteration()
 
         data = ctypes.create_string_buffer(10)
-        readed_bytes = api.library.ssh_channel_read(self.channel, ctypes.byref(data), len(data), 0)
+        readed_bytes = api.library.ssh_channel_read(self.channel, ctypes.byref(data),
+                                                    len(data), 0)
         if readed_bytes > 0:
             return data.value
 
@@ -201,6 +202,26 @@ class Result(object):
     @property
     def return_code(self):
         return self._return_code
+
+
+class Result(LazyResult):
+    """
+    Consumed version of LazyResult. Useful for simple command
+    execution.
+    """
+    _data = None
+
+    def __init__(self, *args, **kwargs):
+        super(Result, self).__init__(*args, **kwargs)
+
+        # consume iterator and save state
+        self._data = list(self)
+
+    def as_bytes(self):
+        return b"".join(self._data)
+
+    def wait(self):
+        return self.return_code
 
 
 class Session(object):
@@ -307,7 +328,7 @@ class Session(object):
         warnings.warn("Shell feature is very experimental and uncomplete.", Warning)
         return Shell(self.session, pty_size, env)
 
-    def execute(self, command):
+    def execute(self, command, lazy=False):
         """
         Execute command on remote host.
 
@@ -320,7 +341,12 @@ class Session(object):
         if isinstance(command, text_type):
             command = bytes(command, "utf-8")
 
-        return Result(self.session, command)
+        if lazy:
+            result = LazyResult(self.session, command)
+        else:
+            result = Result(self.session, command)
+
+        return result
 
     def __del__(self):
         if self.session is not None:
