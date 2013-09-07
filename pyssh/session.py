@@ -7,6 +7,7 @@ from . import api
 from . import compat
 from . import result
 from . import exceptions as exp
+from . import shell
 
 
 class Session(object):
@@ -113,7 +114,7 @@ class Session(object):
         :param dict env: addiotional environ variables
         """
         warnings.warn("Shell feature is very experimental and uncomplete.", Warning)
-        return Shell(self.session, pty_size, env)
+        return shell.Shell(self.session, pty_size, env)
 
     def execute(self, command, lazy=False):
         """
