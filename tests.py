@@ -21,6 +21,15 @@ class PythonLibsshTest(unittest.TestCase):
     def tearDownClass(cls):
         os.remove("/tmp/py-libssh.temp.file")
 
+    def test_auth_with_password(self):
+        # NOTE: this test asumes that your sistem has
+        # test user with test password.
+        s = self.pyssh.connect(username="test", password="test")
+        r = s.execute("id", lazy=False)
+
+        result = r.as_bytes()
+        self.assertEqual(result, b"uid=1001(test) gid=1001(test) groups=1001(test)\n")
+
     def test_connect_and_execute_command_not_lazy(self):
         s = self.pyssh.connect()
         r = s.execute("uname", lazy=False)
