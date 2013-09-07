@@ -3,8 +3,6 @@
 import ctypes
 import ctypes.util
 
-__all__ = ['library']
-
 
 def load_library():
     libpath = ctypes.util.find_library('ssh')
