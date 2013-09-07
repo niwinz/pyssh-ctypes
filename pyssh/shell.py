@@ -5,8 +5,9 @@ from __future__ import unicode_literals
 import warnings
 import ctypes
 
-from . import compat
 from . import api
+from . import compat
+from . import exceptions as exp
 
 
 class Shell(object):
@@ -27,14 +28,14 @@ class Shell(object):
         # Open ssh session
         ret = api.library.ssh_channel_open_session(self._channel)
         if ret != api.SSH_OK:
-            raise RuntimeError("Error code: {0}".format(ret))
+            raise exp.ConnectionError("Error code: {0}".format(ret))
 
         # Request pty
         ret = api.library.ssh_channel_request_pty(self._channel)
         if ret != api.SSH_OK:
-            raise RuntimeError("Error code: {0}".format(ret))
+            raise exp.ConnectionError("Error code: {0}".format(ret))
 
-        # Request pty
+        # Request pty size
         #ret = api.library.ssh_channel_request_pty_size(self._channel,
         #                            self.pty_size[0], self.pty_size[1])
         #if ret != api.SSH_OK:
@@ -43,7 +44,7 @@ class Shell(object):
         # Request shell
         ret = api.library.ssh_channel_request_shell(self._channel)
         if ret != api.SSH_OK:
-            raise RuntimeError("Error code: {0}".format(ret))
+            raise exp.ConnectionError("Error code: {0}".format(ret))
 
         # Set environ variable if theese are available
         if self.env:
@@ -82,7 +83,6 @@ class Shell(object):
         if res != 0:
             return b""
 
-        #nbytes = ssh_channel_read(channel, buffer, sizeof(buffer), 0);
         buffer = ctypes.create_string_buffer(num)
         readed = api.library.ssh_channel_read_nonblocking(self.channel, buffer, num, 0)
         if readed < 0:
@@ -93,11 +93,8 @@ class Shell(object):
     def __del__(self):
         if self._channel is not None:
             if api.library.ssh_channel_is_closed(self._channel) == 0:
-                api.library.ssh_channel_send_eof(self._channel)
                 api.library.ssh_channel_close(self._channel)
+                api.library.ssh_channel_send_eof(self._channel)
 
             api.library.ssh_channel_free(self.channel)
             self._channel = None
-
-
-
