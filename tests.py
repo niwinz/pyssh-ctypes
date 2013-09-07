@@ -11,6 +11,7 @@ class PythonLibsshTest(unittest.TestCase):
     def setUpClass(cls):
         # Add build directory to python path
         cls.pyssh = importlib.import_module("pyssh")
+        cls.pyssh_result = importlib.import_module("pyssh.result")
 
         with io.open("/tmp/py-libssh.temp.file", "wb") as f:
             f.write(b"aaaaaaaaa\n")
@@ -38,7 +39,7 @@ class PythonLibsshTest(unittest.TestCase):
 
         self.assertEqual(return_code, 0)
         self.assertEqual(result, b"Linux\n")
-        self.assertIsInstance(r, self.pyssh.Result)
+        self.assertIsInstance(r, self.pyssh_result.Result)
 
     def test_connect_and_execute_command_01(self):
         s = self.pyssh.connect()
@@ -48,7 +49,7 @@ class PythonLibsshTest(unittest.TestCase):
 
         self.assertEqual(return_code, 0)
         self.assertEqual(result, b"Linux\n")
-        self.assertIsInstance(r, self.pyssh.LazyResult)
+        self.assertIsInstance(r, self.pyssh_result.LazyResult)
 
     def test_connect_and_execute_command_02(self):
         s = self.pyssh.connect()
