@@ -34,6 +34,14 @@ SSH_AUTH_AGAIN = 4
 SSH_AUTH_ERROR = -1
 
 
+class SftpAttributes(ctypes.Structure):
+    _fields_ = [("name", ctypes.c_char_p),
+                ("longname", ctypes.c_char_p),
+                ("flags", ctypes.c_uint32),
+                ("type", ctypes.c_uint8),
+                ("size", ctypes.c_uint64),]
+
+
 try:
     library = load_library()
     library.ssh_new.argtypes = []
