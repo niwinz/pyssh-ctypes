@@ -99,13 +99,12 @@ class Session(object):
             if ret != api.SSH_AUTH_SUCCESS:
                 raise exp.AuthenticationError("Error when trying authenticate with pubkey. "
                                               "(Error code: {0})".format(ret))
-
     def close(self):
         """
         Close initialized ssh connection.
         """
         if self._closed:
-            raise RuntimeError("Already closed")
+            raise exp.ConnectionError("Already closed")
 
         self._closed = True
         api.library.ssh_disconnect(self.session)
