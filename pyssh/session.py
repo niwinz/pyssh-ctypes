@@ -89,7 +89,7 @@ class Session(object):
 
         self._closed = False
 
-        if self.password:
+        if self.password is not None:
             ret = api.library.ssh_userauth_password(self.session, None, self.password)
             if ret != api.SSH_AUTH_SUCCESS:
                 raise exp.AuthenticationError("Error when trying authenticate with password. "
