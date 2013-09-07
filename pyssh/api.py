@@ -111,7 +111,6 @@ try:
     library.ssh_channel_request_shell.argtypes = [ctypes.c_void_p]
     library.ssh_channel_request_shell.restype = ctypes.c_int
 
-
     library.ssh_get_error.argtypes = [ctypes.c_void_p]
     library.ssh_get_error.restype = ctypes.c_char_p
 
@@ -119,7 +118,14 @@ try:
     library.sftp_new.argtypes = [ctypes.c_void_p]
     library.sftp_new.restype = ctypes.c_void_p
 
+    library.sftp_init.argtypes = [ctypes.c_void_p]
+    library.sftp_init.restype = None
+
     library.sftp_free.argtypes = [ctypes.c_void_p]
+
+    library.sftp_fstat.argtypes = [ctypes.c_void_p]
+    library.sftp_fstat.restype = SftpAttributes
+    library.sftp_fstat.restype = ctypes.c_void_p
 
     library.sftp_open.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_int, ctypes.c_int]
     library.sftp_open.restype = ctypes.c_void_p
