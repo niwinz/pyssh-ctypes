@@ -7,8 +7,9 @@ import stat
 import os
 import io
 
-from . import compat
 from . import api
+from . import compat
+from . import exceptions as exp
 
 
 class Sftp(object):
@@ -28,11 +29,33 @@ class Sftp(object):
     sftp = None
     session = None
 
-    def __init__(self, session):
+    def __init__(self, session, buffer_size=2048):
         self.session_wrapper = session
         self.session = session.session
 
+        self.buffer_size = buffer_size
+
+        # TODO: handle exceptions
         self.sftp = api.library.sftp_new(self.session)
+        api.library.sftp_init(self.sftp)
+
+    def _get_file_metadata(self, file_ptr):
+        attrs_ptr = api.library.sftp_fstat(file_ptr)
+        if attrs_ptr is None:
+            msg = api.library.ssh_get_error(self.session)
+            raise exp.ConnectionError("Error raised by ssh: {0}".format(msg.decode("utf-8")))
+
+        attrs = ctypes.cast(attrs_ptr, ctypes.POINTER(api.SftpAttributes))
+        return attrs.contents
+
+    def _open_remote_file(self, path):
+        remote_file_ptr = api.library.sftp_open(self.sftp, path, os.O_RDONLY, stat.S_IRWXU)
+
+        if remote_file_ptr is None:
+            msg = api.library.ssh_get_error(self.session)
+            raise exp.ConnectionError("Error raised by ssh: {0}".format(msg.decode("utf-8")))
+
+        return remote_file_ptr
 
     def get(self, remote_path, local_path):
         """
@@ -44,18 +67,52 @@ class Sftp(object):
         if isinstance(remote_path, compat.text_type):
             remote_path = compat.to_bytes(remote_path)
 
-        access_type = os.O_RDONLY
-        remote_file = api.library.sftp_open(self.sftp, remote_path, access_type, stat.S_IRWXU)
+        # Create new pointer to remote file
+        remote_file_ptr = self._open_remote_file(remote_path)
 
-        with io.open(local_path, "wb") as f:
+        # Obtain metadata with remote file size
+        remote_file_attrs = self._get_file_metadata(remote_file_ptr)
+
+        # Create counters for reintent in case of error
+        total_readed, total_size = 0, remote_file_attrs.size
+        errors_counter = 0
+
+        def read_pipeline(f):
+            nonlocal total_readed, total_size, errors_counter
+
             while True:
-                buffer = ctypes.create_string_buffer(1024)
-                readed = api.library.sftp_read(remote_file, ctypes.byref(buffer),  1024);
-
+                buffer = ctypes.create_string_buffer(self.buffer_size)
+                readed = api.library.sftp_read(remote_file_ptr, ctypes.byref(buffer),
+                                               self.buffer_size)
                 if readed == 0:
-                    break
+                    if total_readed != total_size:
+                        errors_counter += 1
+                        return False
+                    return True
 
-                f.write(buffer.value)
+                elif readed < 0:
+                    raise exp.ConnectionError("Connection interrumped")
+
+                else:
+                    errors_counter = 0
+                    total_readed += readed
+                    f.write(buffer.value)
+
+        try:
+            with io.open(local_path, "wb") as f:
+                while errors_counter < 3:
+                    ok = read_pipeline(f)
+                    if ok:
+                        break
+
+                    remote_file_ptr = self._open_remote_file(remote_path)
+
+                if errors_counter >= 3:
+                    raise exp.Connection("Connection errors repeated more than 3 times")
+
+        except (exp.ConnectionError, RuntimeError):
+            api.library.sftp_close(remote_file_ptr)
+            raise
 
     def put(self, path, remote_path):
         """
@@ -72,26 +129,31 @@ class Sftp(object):
             remote_path = compat.to_bytes(remote_path, "utf-8")
 
         access_type = os.O_WRONLY | os.O_CREAT | os.O_TRUNC
-        remote_file = api.library.sftp_open(self.sftp, remote_path, access_type, stat.S_IRWXU);
+        remote_file_ptr = api.library.sftp_open(self.sftp, remote_path, access_type, stat.S_IRWXU)
+
+        if remote_file_ptr is None:
+            msg = api.library.ssh_get_error(self.session)
+            raise exp.ConnectionError("Error raised by ssh: {0}".format(msg.decode("utf-8")))
 
         with io.open(path, "rb") as f:
             while True:
-                chuck = f.read(1024)
+                chuck = f.read(self.buffer_size)
                 if not chuck:
                     break
 
-                written = api.library.sftp_write(remote_file, chuck, len(chuck))
+                written = api.library.sftp_write(remote_file_ptr, chuck, len(chuck))
                 if written != len(chuck):
                     raise RuntimeError("Can't write file")
 
-        api.library.sftp_close(remote_file)
+        api.library.sftp_close(remote_file_ptr)
 
     def open(self, path, mode):
         """
         Open a remote file.
 
         :param str path: remote file path
-        :param int mode: open file model (see http://docs.python.org/3.3/library/os.html#open-flag-constants)
+        :param int mode: open file model
+                         (see http://docs.python.org/3.3/library/os.html#open-flag-constants)
 
         :returns: SFTP File wrapper
         :rtype: pyssh.SftpFile
@@ -123,7 +185,7 @@ class SftpFile(object):
 
         if self.file is None:
             self._closed = True
-            raise RuntimeError("Can't open file {0}".format(path.decode("utf-8")))
+            raise ext.ConnectionError("Can't open file {0}".format(path.decode("utf-8")))
 
     def write(self, data):
         """
@@ -139,7 +201,7 @@ class SftpFile(object):
 
         return written
 
-    def read(self, num=None):
+    def read(self, num=None, buffer_length=1024):
         """
         Read from remote file.
 
@@ -148,7 +210,7 @@ class SftpFile(object):
         :rtype: bytes
         """
         if num is None:
-            buffer_len = 1024
+            buffer_len = buffer_length
         else:
             buffer_len = num
 
