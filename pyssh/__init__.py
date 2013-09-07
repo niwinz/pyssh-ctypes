@@ -16,9 +16,16 @@ def connect(hostname="localhost", port="22", username=None, password=None, passp
     :param str password: remote user password.
     :param str passphrase: passphrase in case you would authenticate with pubkey
     """
+
     session = Session(hostname=hostname, port=port, username=username,
                       password=password, passphrase=passphrase)
-    session.connect()
+    try:
+        session.connect()
+    except Exception as e:
+        # Free resources on any exception is raised
+        session.close()
+        raise
+
     return session
 
 

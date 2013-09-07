@@ -30,46 +30,45 @@ class PythonLibsshTest(unittest.TestCase):
     def test_auth_with_password(self):
         # NOTE: this test asumes that your sistem has
         # test user with test password.
-        s = self.pyssh.connect(username="test", password="test")
-        r = s.execute("id", lazy=False)
-
-        result = r.as_bytes()
-        self.assertEqual(result, b"uid=1001(test) gid=1001(test) groups=1001(test)\n")
+        with self.pyssh.connect(username="test", password="test") as s:
+            r = s.execute("id", lazy=False)
+            result = r.as_bytes()
+            self.assertEqual(result, b"uid=1001(test) gid=1001(test) groups=1001(test)\n")
 
     def test_auth_with_wrong_password(self):
         # NOTE: this test asumes that your sistem has
         # test user with test password.
 
         with self.assertRaises(self.pyssh_exp.AuthenticationError):
-            self.pyssh.connect(username="test", password="test2")
+            s = self.pyssh.connect(username="test", password="test2")
 
     def test_connect_and_execute_command_not_lazy(self):
-        s = self.pyssh.connect()
-        r = s.execute("uname", lazy=False)
-        result = r.as_bytes()
-        return_code = r.return_code
+        with self.pyssh.connect() as s:
+            r = s.execute("uname", lazy=False)
+            result = r.as_bytes()
+            return_code = r.return_code
 
-        self.assertEqual(return_code, 0)
-        self.assertEqual(result, b"Linux\n")
-        self.assertIsInstance(r, self.pyssh_result.Result)
+            self.assertEqual(return_code, 0)
+            self.assertEqual(result, b"Linux\n")
+            self.assertIsInstance(r, self.pyssh_result.Result)
 
     def test_connect_and_execute_command_01(self):
-        s = self.pyssh.connect()
-        r = s.execute("uname", lazy=True)
-        result = r.as_bytes()
-        return_code = r.return_code
+        with self.pyssh.connect() as s:
+            r = s.execute("uname", lazy=True)
+            result = r.as_bytes()
+            return_code = r.return_code
 
-        self.assertEqual(return_code, 0)
-        self.assertEqual(result, b"Linux\n")
-        self.assertIsInstance(r, self.pyssh_result.LazyResult)
+            self.assertEqual(return_code, 0)
+            self.assertEqual(result, b"Linux\n")
+            self.assertIsInstance(r, self.pyssh_result.LazyResult)
 
     def test_connect_and_execute_command_02(self):
-        s = self.pyssh.connect()
-        r = s.execute("uname", lazy=True)
-        result = r.as_bytes()
-
-        with self.assertRaises(RuntimeError):
+        with self.pyssh.connect() as s:
+            r = s.execute("uname", lazy=True)
             result = r.as_bytes()
+
+            with self.assertRaises(RuntimeError):
+                result = r.as_bytes()
 
     #def test_connect_and_execute_command_02(self):
     #    s = self.pyssh.connect()
@@ -84,9 +83,8 @@ class PythonLibsshTest(unittest.TestCase):
             sha1_1.update(data)
             f.write(data)
 
-        session = self.pyssh.connect()
-        sftp = self.pyssh.Sftp(session)
-        sftp.put("/tmp/py-libssh.temp.file.2", "/tmp/py-libssh.temp.file.3")
+        with self.pyssh.connect() as s, s.create_sftp() as sftp:
+            sftp.put("/tmp/py-libssh.temp.file.2", "/tmp/py-libssh.temp.file.3")
 
         self.assertTrue(os.path.exists("/tmp/py-libssh.temp.file.3"))
 
@@ -106,9 +104,8 @@ class PythonLibsshTest(unittest.TestCase):
             sha1_1.update(data)
             f.write(data)
 
-        session = self.pyssh.connect()
-        sftp = self.pyssh.Sftp(session)
-        sftp.get("/tmp/py-libssh.temp.file.2", "/tmp/py-libssh.temp.file.3")
+        with self.pyssh.connect() as s, s.create_sftp() as sftp:
+            sftp.get("/tmp/py-libssh.temp.file.2", "/tmp/py-libssh.temp.file.3")
 
         self.assertTrue(os.path.exists("/tmp/py-libssh.temp.file.3"))
 
@@ -129,9 +126,8 @@ class PythonLibsshTest(unittest.TestCase):
             sha1_1.update(data)
             f.write(data)
 
-        session = self.pyssh.connect()
-        sftp = self.pyssh.Sftp(session)
-        sftp.get("/tmp/py-libssh.temp.file.2", "/tmp/py-libssh.temp.file.3")
+        with self.pyssh.connect() as s, s.create_sftp() as sftp:
+            sftp.get("/tmp/py-libssh.temp.file.2", "/tmp/py-libssh.temp.file.3")
 
         self.assertTrue(os.path.exists("/tmp/py-libssh.temp.file.3"))
 

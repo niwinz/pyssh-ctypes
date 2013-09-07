@@ -14,7 +14,8 @@ class Shell(object):
     _channel = None
 
     def __init__(self, session, pty_size, env):
-        self.session = session
+        self.session_wrapper = session
+        self.session = session.session
         self.pty_size = pty_size
         self.env = env
 

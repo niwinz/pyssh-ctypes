@@ -101,9 +101,11 @@ class Sftp(object):
 
         return SftpFile(path, mode, self)
 
-    def __del__(self):
-        if self.sftp is not None:
-            api.library.sftp_free(self.sftp)
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args, **kwargs):
+        api.library.sftp_free(self.sftp)
 
 
 class SftpFile(object):
