@@ -6,6 +6,7 @@ import warnings
 from . import api
 from . import compat
 from . import result
+from . import exceptions as exp
 
 
 class Session(object):
@@ -73,25 +74,27 @@ class Session(object):
         """
 
         if not self._closed:
-            raise RuntimeError("Already connected")
+            raise exp.ConnectionError("Already connected")
 
         self._closed = False
 
         ret = api.library.ssh_connect(self.session)
         if ret != api.SSH_OK:
             msg = api.library.ssh_get_error(self.session)
-            raise RuntimeError("Error {0}: {1}".format(ret, msg.decode('utf-8')))
+            raise exp.ConnectionError("Error {0}: {1}".format(ret, msg.decode('utf-8')))
 
         self._closed = False
 
         if self.password:
             ret = api.library.ssh_userauth_password(self.session, None, self.password)
             if ret != api.SSH_AUTH_SUCCESS:
-                raise RuntimeError("Error code: {0}".format(ret))
+                raise exp.AuthenticationError("Error when trying authenticate with password. "
+                                              "(Error code: {0})".format(ret))
         else:
             ret = api.library.ssh_userauth_autopubkey(self.session, self.passphrase)
             if ret != api.SSH_AUTH_SUCCESS:
-                raise RuntimeError("Error code: {0}".format(ret))
+                raise exp.AuthenticationError("Error when trying authenticate with pubkey. "
+                                              "(Error code: {0})".format(ret))
 
     def close(self):
         """

@@ -1,3 +1,7 @@
+# -*- coding: utf-8 -*-
+
+from __future__ import unicode_literals
+
 import io
 import os
 import sys
@@ -12,6 +16,7 @@ class PythonLibsshTest(unittest.TestCase):
         # Add build directory to python path
         cls.pyssh = importlib.import_module("pyssh")
         cls.pyssh_result = importlib.import_module("pyssh.result")
+        cls.pyssh_exp = importlib.import_module("pyssh.exceptions")
 
         with io.open("/tmp/py-libssh.temp.file", "wb") as f:
             f.write(b"aaaaaaaaa\n")
@@ -30,6 +35,13 @@ class PythonLibsshTest(unittest.TestCase):
 
         result = r.as_bytes()
         self.assertEqual(result, b"uid=1001(test) gid=1001(test) groups=1001(test)\n")
+
+    def test_auth_with_wrong_password(self):
+        # NOTE: this test asumes that your sistem has
+        # test user with test password.
+
+        with self.assertRaises(self.pyssh_exp.AuthenticationError):
+            self.pyssh.connect(username="test", password="test2")
 
     def test_connect_and_execute_command_not_lazy(self):
         s = self.pyssh.connect()
