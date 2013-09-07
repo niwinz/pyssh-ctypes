@@ -91,7 +91,10 @@ class Shell(object):
 
         return buffer.value
 
-    def __del__(self):
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args, **kwargs):
         if self._channel is not None:
             if api.library.ssh_channel_is_closed(self._channel) == 0:
                 api.library.ssh_channel_close(self._channel)
