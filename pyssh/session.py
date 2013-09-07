@@ -72,6 +72,9 @@ class Session(object):
     def connect(self):
         """
         Initialize the connection with remote host.
+
+        This method souldn't be used normally, because it is called automatically
+        by the :py:func:`pyssh.connect` function.
         """
 
         if not self._closed:
@@ -121,8 +124,11 @@ class Session(object):
         Execute command on remote host.
 
         :param str command: command string
+        :param bool lazy: set true for return a lazy result
+                          instead a evalueted. Useful for execute
+                          commands with large output (default: False)
 
-        :returns: Lazy result instance
+        :returns: Result instance
         :rtype: :py:class:`pyssh.result.Result`
         """
 

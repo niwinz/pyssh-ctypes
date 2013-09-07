@@ -21,8 +21,8 @@ class Sftp(object):
     :ivar ponter sftp: c sftp session pointer
     :ivar pointer session: c ssh session pointer
 
-    :param pyssh.Session session: initialized and connected
-        :py:class:`pyssh.Session` instance.
+    :param pyssh.session.Session session: initialized and connected
+        :py:class:`pyssh.session.Session` instance.
     """
 
     sftp = None
@@ -33,7 +33,6 @@ class Sftp(object):
         self.session = session.session
 
         self.sftp = api.library.sftp_new(self.session)
-
 
     def get(self, remote_path, local_path):
         """
