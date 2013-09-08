@@ -1,2 +1,2 @@
 #!/bin/sh
-python3 -m unittest -vv $@
+python3 -Xfaulthandler -m unittest -vv $@
