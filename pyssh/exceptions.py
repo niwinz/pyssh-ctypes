@@ -4,6 +4,10 @@ class SshError(Exception):
     pass
 
 
+class SftpError(SshError):
+    pass
+
+
 class AuthenticationError(SshError):
     pass
 

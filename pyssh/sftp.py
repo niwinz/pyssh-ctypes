@@ -104,6 +104,7 @@ class Sftp(object):
                     if ok:
                         break
 
+                    api.library.sftp_close(remote_file_ptr)
                     remote_file_ptr = self._open_remote_file(remote_path)
 
                 if errors_counter >= 3:
@@ -184,7 +185,13 @@ class SftpFile(object):
 
         if self.file is None:
             self._closed = True
-            raise ext.ConnectionError("Can't open file {0}".format(path.decode("utf-8")))
+            raise ext.SftpError("Can't open file {0}".format(path.decode("utf-8")))
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args, **kwargs):
+        self.close()
 
     def write(self, data):
         """
@@ -262,7 +269,7 @@ class SftpFile(object):
         Close a opened file.
         """
         if self._closed:
-            raise RuntimeError("Already closed")
+            raise ext.ResourceManagementError("SftpFile instance already closed.")
 
         self._closed = True
         api.library.sftp_close(self.file)
