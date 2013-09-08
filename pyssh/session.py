@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import unicode_literals
+import functools
 import warnings
 
 from . import api
@@ -10,6 +11,23 @@ from . import exceptions as exp
 
 from . import shell
 from . import sftp
+
+
+def _lazy_connect(func):
+    @functools.wraps(func)
+    def _decorator(self, *args, **kwargs):
+        self._connect_if_not_connected()
+        return func(self, *args, **kwargs)
+    return _decorator
+
+
+def _check_open_session(func):
+    @functools.wraps(func)
+    def _decorator(self, *args, **kwargs):
+        if self._closed:
+            raise exp.SshError("Session aleady closed.")
+        return func(self, *args, **kwargs)
+    return _decorator
 
 
 class Session(object):
@@ -33,7 +51,7 @@ class Session(object):
     username = None
     password = None
 
-    _closed = True
+    _closed = False
     _connected = False
 
     def __init__(self, hostname, port=22, username=None, password=None, passphrase=None):
@@ -72,24 +90,20 @@ class Session(object):
         api.library.ssh_options_set(self.session, api.SSH_OPTIONS_PORT_STR, self.port)
         api.library.ssh_options_set(self.session, api.SSH_OPTIONS_HOST, self.hostname)
 
-    def connect(self):
-        """
-        Initialize the connection with remote host.
-
-        This method souldn't be used normally, because it is called automatically
-        by the :py:func:`pyssh.connect` function.
-        """
-
+    def _connect_if_not_connected(self):
+        # Do nothing if it is connected
         if self._connected:
-            raise exp.ConnectionError("Already connected")
+            return
 
-        self._closed = False
         self._connected = True
 
         ret = api.library.ssh_connect(self.session)
         if ret != api.SSH_OK:
-            msg = api.library.ssh_get_error(self.session)
-            raise exp.ConnectionError("Error {0}: {1}".format(ret, msg.decode('utf-8')))
+            remote_msg = compat.to_text(api.library.ssh_get_error(self.session))
+            msg = ("Unable to connect to remote server. "
+                   "(Return code: {0}, Return message: {1})")
+
+            raise exp.ConnectionError(msg.format(ret, remote_msg))
 
         if self.password is not None:
             ret = api.library.ssh_userauth_password(self.session, None, self.password)
@@ -106,20 +120,24 @@ class Session(object):
         Close initialized ssh connection.
         """
         if self._closed:
-            raise exp.ConnectionError("Already closed")
+            raise exp.ResourceManagementError("Already closed")
 
         self._closed = True
-        api.library.ssh_disconnect(self.session)
+
+        if self._connected:
+            api.library.ssh_disconnect(self.session)
+            self._connected = False
+
         api.library.ssh_free(self.session)
 
     def __enter__(self):
-        if not self._connected:
-            self.connect()
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
         self.close()
 
+    @_check_open_session
+    @_lazy_connect
     def create_shell(self, pty_size=(80, 24), env={}):
         """
         :param tuple pty_size: in case of shell is true this indicates
@@ -129,6 +147,8 @@ class Session(object):
         warnings.warn("Shell feature is very experimental and uncomplete.", Warning)
         return shell.Shell(self, pty_size, env)
 
+    @_check_open_session
+    @_lazy_connect
     def create_sftp(self):
         """
         Create a new sftp session throught current ssh session.
@@ -138,6 +158,8 @@ class Session(object):
         """
         return sftp.Sftp(self)
 
+    @_check_open_session
+    @_lazy_connect
     def execute(self, command, lazy=False):
         """
         Execute command on remote host.
