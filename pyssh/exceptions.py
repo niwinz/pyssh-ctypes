@@ -1,12 +1,16 @@
 # -*- coding: utf-8 -*-
 
-class PySshException(Exception):
+class SshError(Exception):
     pass
 
 
-class AuthenticationError(PySshException):
+class AuthenticationError(SshError):
     pass
 
 
-class ConnectionError(PySshException):
+class ConnectionError(SshError):
+    pass
+
+
+class ResourceManagementError(SshError):
     pass
