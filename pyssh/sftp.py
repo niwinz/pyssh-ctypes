@@ -64,8 +64,7 @@ class Sftp(object):
         :param str remote_path: remote file path
         :param str local_path:  local file path
         """
-        if isinstance(remote_path, compat.text_type):
-            remote_path = compat.to_bytes(remote_path)
+        remote_path = compat.to_bytes(remote_path)
 
         # Create new pointer to remote file
         remote_file_ptr = self._open_remote_file(remote_path)
