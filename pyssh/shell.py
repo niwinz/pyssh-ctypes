@@ -109,8 +109,8 @@ class Shell(object):
         if res != 0:
             return b""
 
-        buffer = ctypes.create_string_buffer(num)
-        readed = api.library.ssh_channel_read_nonblocking(self.channel, buffer, num, 0)
+        buffer = ctypes.create_string_buffer(n)
+        readed = api.library.ssh_channel_read_nonblocking(self.channel, buffer, n, 0)
         if readed < 0:
             raise RuntimeError("Error on read")
 
