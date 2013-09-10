@@ -7,7 +7,7 @@
 pyssh-ctypes
 ============
 
-Is a python, object oriented wrapper for libssh build with ctypes.
+Is a python, object oriented wrapper for libssh, build with ctypes.
 
 
 Features
@@ -47,4 +47,3 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-
