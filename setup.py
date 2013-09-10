@@ -5,14 +5,14 @@ from setuptools import setup
 
 setup(
     name='pyssh-ctypes',
-    version='0.1.0',
-    description='Python bingings for libssh build on top of boost.python',
+    version='0.2',
+    description='Python bindings for libssh on top of ctypes',
     author='Andrey Antukh',
     author_email='niwi@niwi.be',
 
     url='https://github.com/niwibe/py-libssh',
     packages = ['pyssh'],
-    install_requires = ["six >=1.3.0"],
+    install_requires = ["six >=1.4.1"],
     classifiers = [
         "Development Status :: 4 - Beta",
         "Topic :: System :: Systems Administration",
@@ -21,8 +21,9 @@ setup(
         "Operating System :: POSIX :: BSD :: NetBSD",
         "Operating System :: POSIX :: Linux",
         "Programming Language :: Python",
+        "Programming Language :: Python :: 2",
         "Programming Language :: Python :: 2.7",
-        "Programming Language :: Python :: 3.2",
+        "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.3",
         "Programming Language :: Python :: Implementation :: CPython",
         "Programming Language :: Python :: Implementation :: PyPy",

@@ -112,6 +112,12 @@ class Result(LazyResult):
         self._data = list(self)
 
     def as_bytes(self):
+        """
+        Return a cached result.
+
+        :returns: bytes chunk of command execution result
+        :rtype: bytes
+        """
         return b"".join(self._data)
 
     def wait(self):

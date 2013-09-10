@@ -140,6 +140,8 @@ class Session(object):
     @_lazy_connect
     def create_shell(self, pty_size=(80, 24), env={}):
         """
+        Creates a new shell session  throught current ssh channel.
+
         :param tuple pty_size: in case of shell is true this indicates
             the size of a virtual terminal
         :param dict env: addiotional environ variables
@@ -151,7 +153,7 @@ class Session(object):
     @_lazy_connect
     def create_sftp(self):
         """
-        Create a new sftp session throught current ssh session.
+        Create a new sftp session throught current ssh channel.
 
         :returns: Sftp instance
         :rtype: :py:class:`pyssh.sftp.Sftp`
@@ -164,9 +166,12 @@ class Session(object):
         """
         Execute command on remote host.
 
+        This command can return :py:class:`~pyssh.result.Result` or
+        :py:class:`~pyssh.result.LazyResult` depending of lazy parameter.
+
         :param str command: command string
         :param bool lazy: set true for return a lazy result
-                          instead a evalueted. Useful for execute
+                          instead a evaluated. Useful for execute
                           commands with large output (default: False)
 
         :returns: Result instance

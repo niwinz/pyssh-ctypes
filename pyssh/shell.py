@@ -11,6 +11,10 @@ from . import exceptions as exp
 
 
 class Shell(object):
+    """
+    Shell session.
+    """
+
     _channel = None
 
     def __init__(self, session, pty_size, env):
@@ -67,6 +71,16 @@ class Shell(object):
         return self._channel
 
     def write(self, data):
+        """
+        Write bytes to remote shell.
+
+        The `data` parameter accept both str and bytes, if you passes str (unicode) is
+        automatically converted to bytes using utf-8 encoding.
+
+        :param bytes data: arbitrary length of bytes.
+        :returns: a number of bytes written to remote shell.
+        :rtype: int
+        """
         if isinstance(data, compat.text_type):
             data = compat.to_bytes(data, "utf-8")
 
@@ -75,7 +89,18 @@ class Shell(object):
             raise RuntimeError("Error on write")
         return written
 
-    def read(self, num):
+    def read(self, n):
+        """
+        Read bytes from remote shell.
+
+        This method always return value, if not bytes available to read
+        it returns an empty bytestring.
+
+        :param int n: number of bytes to read
+        :returns: bytestring of readed data.
+        :rtype: bytes
+        """
+
         res = api.library.ssh_channel_is_open(self.channel)
         if res == 0:
             raise RuntimeError("Channel is closed")

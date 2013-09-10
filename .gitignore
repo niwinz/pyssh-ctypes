@@ -1,3 +1,7 @@
 .*.swp
 *.pyc
 *__pycache__*
+docs/_build
+build/
+dist/
+MANIFEST

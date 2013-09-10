@@ -35,6 +35,17 @@ def new_session(hostname="localhost", port="22", username=None,
 
 def connect(hostname="localhost", port="22", username=None,
             password=None, passphrase=None):
+    """
+    Shortcut method for create new session and connects to remote server.
+
+    :param str hostname: remote ip or host
+    :param int port: remote port
+    :param str username: remote user name with which you want to authenticate
+    :param str password: remote user password.
+    :param str passphrase: passphrase in case you would authenticate with pubkey
+
+    **NOTE:** this method is deprecated.
+    """
 
     warnings.warn("connect function is deprectad, use new_session function",
                   DeprecationWarning)
