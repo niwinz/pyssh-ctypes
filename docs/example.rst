@@ -9,7 +9,7 @@ Simple command execution
 .. code-block:: python
 
     >>> import pyssh
-    >>> s = pyssh.connect()
+    >>> s = pyssh.new_session(hostname="localhost", port="22")
     >>> r = s.execute("uname -a")
     >>> r.as_bytes()
     b'Linux vaio.niwi.be 3.5.3-1-ARCH #1 SMP PREEMPT Sun Aug 26 09:14:51 CEST 2012 x86_64 GNU/Linux\n'
@@ -24,8 +24,8 @@ Random access on remote file with sftp
 
     >>> import os
     >>> import pyssh
-    >>> session = pyssh.connect("localhost")
-    >>> sftp = pyssh.Sftp(session)
+    >>> session = pyssh.new_session(hostname="localhost")
+    >>> sftp = session.create_sftp()
     >>> f = sftp.open("/tmp/some-file", (os.O_RDWR | os.O_CREAT))
     >>> f.tell()
     0
