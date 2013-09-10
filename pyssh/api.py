@@ -142,6 +142,10 @@ try:
     library.sftp_read.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint]
     library.sftp_read.restype = ctypes.c_int
 
+    # Forward
+    library.ssh_channel_open_forward.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_int, ctypes.c_char_p, ctypes.c_int]
+    library.ssh_channel_open_forward.restype = ctypes.c_int
+
 except AttributeError:
     raise ImportError('ssh shared library not found or incompatible')
 except (OSError, IOError):
