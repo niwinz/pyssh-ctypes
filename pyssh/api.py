@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import warnings
 import ctypes
 import ctypes.util
 
@@ -146,8 +147,5 @@ try:
     library.ssh_channel_open_forward.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_int, ctypes.c_char_p, ctypes.c_int]
     library.ssh_channel_open_forward.restype = ctypes.c_int
 
-except AttributeError:
-    raise ImportError('ssh shared library not found or incompatible')
-except (OSError, IOError):
-    raise ImportError('ssh shared library not found.\n'
-                      'you probably had not installed libssh library.\n')
+except (AttributeError, OSError, IOError):
+    warnings.warn("ssh shared library not found or incompatible")
