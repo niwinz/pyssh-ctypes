@@ -1,6 +1,11 @@
 Changelog
 =========
 
+Version 0.2
+-----------
+
+* Fix issues with bytes data transfer over sftp.
+
 Version 0.1
 -----------
 
