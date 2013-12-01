@@ -29,7 +29,7 @@ class Sftp(object):
     sftp = None
     session = None
 
-    def __init__(self, session, buffer_size=2048):
+    def __init__(self, session, buffer_size=1024*16):
         self.session_wrapper = session
         self.session = session.session
 
@@ -95,7 +95,7 @@ class Sftp(object):
                 else:
                     errors_counter = 0
                     total_readed += readed
-                    f.write(buffer.value)
+                    f.write(buffer.raw[:readed])
 
         try:
             with io.open(local_path, "wb") as f:
@@ -229,16 +229,17 @@ class SftpFile(object):
         if num is not None and num > 0:
             if buffer_len != readed:
                 raise RuntimeError("Error on read")
-            return buffer.value
+            return buffer.raw
 
-        readed_data = [buffer.value]
+        readed_data = [buffer.raw]
         while True:
             buffer = ctypes.create_string_buffer(buffer_len)
+
             readed = api.library.sftp_read(self.file, ctypes.byref(buffer),  buffer_len);
             if readed == 0:
                 break
 
-            readed_data.append(buffer.value)
+            readed_data.append(buffer.raw[:readed])
         return b"".join(readed_data)
 
     def seek(self, offset):
