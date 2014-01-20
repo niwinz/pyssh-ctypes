@@ -5,7 +5,7 @@ from setuptools import setup
 
 setup(
     name='pyssh-ctypes',
-    version='0.2',
+    version='0.3',
     description='Python bindings for libssh on top of ctypes',
     author='Andrey Antukh',
     author_email='niwi@niwi.be',
