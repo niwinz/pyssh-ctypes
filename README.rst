@@ -33,3 +33,9 @@ Documentation
 -------------
 
 https://py-libssh-ctypes.readthedocs.org/en/latest/
+
+
+.. image:: https://d2weczhvl823v0.cloudfront.net/niwibe/pyssh-ctypes/trend.png
+   :alt: Bitdeli badge
+   :target: https://bitdeli.com/free
+
