@@ -72,20 +72,20 @@ class Sftp(object):
         # Obtain metadata with remote file size
         remote_file_attrs = self._get_file_metadata(remote_file_ptr)
 
-        # Create counters for reintent in case of error
-        total_readed, total_size = 0, remote_file_attrs.size
-        errors_counter = 0
+        stats = {
+            "total_readed": 0,
+            "total_size": remote_file_attrs.size,
+            "errors_counter": 0,
+        }
 
         def read_pipeline(f):
-            nonlocal total_readed, total_size, errors_counter
-
             while True:
                 buffer = ctypes.create_string_buffer(self.buffer_size)
                 readed = api.library.sftp_read(remote_file_ptr, ctypes.byref(buffer),
                                                self.buffer_size)
                 if readed == 0:
-                    if total_readed != total_size:
-                        errors_counter += 1
+                    if stats["total_readed"] != stats["total_size"]:
+                        stats["errors_counter"] += 1
                         return False
                     return True
 
@@ -93,13 +93,13 @@ class Sftp(object):
                     raise exp.ConnectionError("Connection interrumped")
 
                 else:
-                    errors_counter = 0
-                    total_readed += readed
+                    stats["errors_counter"] = 0
+                    stats["total_readed"] += readed
                     f.write(buffer.raw[:readed])
 
         try:
             with io.open(local_path, "wb") as f:
-                while errors_counter < 3:
+                while stats["errors_counter"] < 3:
                     ok = read_pipeline(f)
                     if ok:
                         break
@@ -107,7 +107,7 @@ class Sftp(object):
                     api.library.sftp_close(remote_file_ptr)
                     remote_file_ptr = self._open_remote_file(remote_path)
 
-                if errors_counter >= 3:
+                if stats["errors_counter"] >= 3:
                     raise exp.Connection("Connection errors repeated more than 3 times")
 
         except (exp.ConnectionError, RuntimeError):
