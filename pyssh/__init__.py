@@ -8,7 +8,8 @@ from .sftp import Sftp
 
 
 def new_session(hostname="localhost", port="22", username=None,
-                password=None, passphrase=None, connect_on_init=False):
+                password=None, passphrase=None, connect_on_init=False,
+                verify_knownhost_callback=None):
     """
     Shortcut method for create new session instance.
 
@@ -27,7 +28,8 @@ def new_session(hostname="localhost", port="22", username=None,
     """
 
     session = Session(hostname=hostname, port=port, username=username,
-                      password=password, passphrase=passphrase)
+                      password=password, passphrase=passphrase,
+                      verify_knownhost_callback=verify_knownhost_callback)
     if connect_on_init:
         session._connect_if_not_connected()
     return session
