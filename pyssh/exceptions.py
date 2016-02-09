@@ -18,3 +18,7 @@ class ConnectionError(SshError):
 
 class ResourceManagementError(SshError):
     pass
+
+
+class HostVerificationError(SshError):
+    pass

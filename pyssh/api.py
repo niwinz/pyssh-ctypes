@@ -113,6 +113,12 @@ try:
     library.ssh_get_error.argtypes = [ctypes.c_void_p]
     library.ssh_get_error.restype = ctypes.c_char_p
 
+    library.ssh_get_pubkey_hash.argtypes = [ctypes.c_void_p, ctypes.POINTER(ctypes.c_char_p)]
+    library.ssh_get_pubkey_hash.restype = ctypes.c_int
+
+    library.ssh_clean_pubkey_hash.argtypes = [ctypes.POINTER(ctypes.c_char_p)]
+    library.ssh_clean_pubkey_hash.restype = None
+
     # SFTP
     library.sftp_new.argtypes = [ctypes.c_void_p]
     library.sftp_new.restype = ctypes.c_void_p

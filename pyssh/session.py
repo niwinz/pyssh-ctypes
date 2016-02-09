@@ -11,6 +11,7 @@ from . import exceptions as exp
 
 from . import shell
 from . import sftp
+from ctypes import byref, c_char_p
 
 
 def _lazy_connect(func):
@@ -45,6 +46,9 @@ class Session(object):
     :param str username: remote user name with which you want to authenticate
     :param str password: remote user password.
     :param str passphrase: passphrase in case you would authenticate with pubkey
+    :param func verify_knownhost_callback: function which gets called upon connecting to host. Should return
+        True if connection is allowed, False otherwise. The only parameter to the function is remote host key 
+        SHA1 hash. WARNING: you should always verify host signature!
     """
 
     session = None
@@ -54,7 +58,7 @@ class Session(object):
     _closed = False
     _connected = False
 
-    def __init__(self, hostname, port=22, username=None, password=None, passphrase=None):
+    def __init__(self, hostname, port=22, username=None, password=None, passphrase=None, verify_knownhost_callback=None):
         self.session = api.library.ssh_new()
 
         if isinstance(hostname, compat.text_type):
@@ -90,6 +94,8 @@ class Session(object):
         api.library.ssh_options_set(self.session, api.SSH_OPTIONS_PORT_STR, self.port)
         api.library.ssh_options_set(self.session, api.SSH_OPTIONS_HOST, self.hostname)
 
+        self.verify_knownhost_callback = verify_knownhost_callback
+
     def _connect_if_not_connected(self):
         # Do nothing if it is connected
         if self._connected:
@@ -104,6 +110,17 @@ class Session(object):
                    "(Return code: {0}, Return message: {1})")
 
             raise exp.ConnectionError(msg.format(ret, remote_msg))
+
+        if self.verify_knownhost_callback is not None:
+            hash = c_char_p()
+            try:
+                hashlen = api.library.ssh_get_pubkey_hash(self.session, byref(hash))
+                if hashlen < 1:
+                    raise exp.HostVerificationError("Error verifying remote host - could not fetch pubkey hash.")
+                if not self.verify_knownhost_callback(hash.value[0:hashlen]):
+                    raise exp.HostVerificationError("Error verifying remote host - host not authentic.")
+            finally:
+                api.library.ssh_clean_pubkey_hash(hash)
 
         if self.password is not None:
             ret = api.library.ssh_userauth_password(self.session, None, self.password)
